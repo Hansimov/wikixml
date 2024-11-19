@@ -1,0 +1,6 @@
+dist/
+src/*.egg-info/
+__pycache__
+*.log
+data/
+*.bz2
