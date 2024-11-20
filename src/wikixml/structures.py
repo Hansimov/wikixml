@@ -1,5 +1,6 @@
 from lxml import etree, objectify
 from copy import deepcopy
+from tclogger import dict_get, dict_set, str_to_ts
 
 
 class ElementCleaner:
@@ -19,8 +20,21 @@ class ElementCleaner:
 
 
 class ElementToDictConverter:
+    """
+    Wiki page XML format:
+      * https://meta.wikimedia.org/wiki/Page_metadata
+
+    Data dumps/Dump format - Meta
+      * https://meta.wikimedia.org/wiki/Data_dumps/Dump_format
+    """
+
     def __init__(self):
         self.cleaner = ElementCleaner()
+        self.int_fields = [
+            *["id", "ns", "revision.id", "revision.origin"],
+            *["revision.parentid", "revision.contributor.id"],
+        ]
+        self.time_fields = ["revision.timestamp"]
 
     def to_dict(self, element: etree._Element) -> dict:
         res = {}
@@ -28,12 +42,25 @@ class ElementToDictConverter:
             return element.text
         for child in element:
             res[child.tag] = self.convert(child)
+            child.clear()
         return res
 
+    def cast_types(self, doc: dict) -> dict:
+        for field in self.int_fields:
+            value = dict_get(doc, field)
+            if value:
+                dict_set(doc, field, int(value))
+
+        for field in self.time_fields:
+            value = dict_get(doc, field)
+            if value:
+                dict_set(doc, field, str_to_ts(value))
+
     def convert(self, element: etree._Element, use_root_tag: bool = False) -> dict:
-        e = deepcopy(element)
-        e = self.cleaner.clean(e)
-        res = self.to_dict(e)
+        element = self.cleaner.clean(element)
+        res = self.to_dict(element)
+        self.cast_types(res)
         if use_root_tag:
-            res = {e.tag: res}
+            res = {element.tag: res}
+        element.clear()
         return res
