@@ -9,7 +9,7 @@ from typing import Union
 from .structures import ElementToDictConverter
 
 
-class ZhWikiBz2Parser:
+class WikiXmlParser:
     def __init__(self, file_path: Union[str, Path]):
         self.file_path = file_path
         self.xmlns = "{http://www.mediawiki.org/xml/export-0.11/}"
@@ -37,3 +37,4 @@ class ZhWikiBz2Parser:
                 text = dict_get(page_dict, "revision.text")
                 text_len = chars_len(text)
                 logger.note(f"* {title_part} : {logstr.mesg(brk(text_len))}")
+
