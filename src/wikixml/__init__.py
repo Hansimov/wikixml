@@ -1,1 +1,1 @@
-from .zhwiki import ZhWikiBz2Parser
+from .wiki import WikiXmlParser, WikiPagesIterater
