@@ -11,6 +11,8 @@ pip install wikixml --upgrade
 
 ## Usage
 
+### `WikiXmlParser`
+
 Run example:
 
 ```sh
@@ -20,12 +22,20 @@ python example.py
 See: [example.py](https://github.com/Hansimov/wikixml/blob/main/example.py)
 
 ```python
-from wikixml import ZhWikiBz2Parser
+from wikixml import WikiXmlParser
 
 if __name__ == "__main__":
-    wiki_xml_bz2 = "zhwiki-20241101-pages-articles.xml.bz2"
+    wiki_xml_bz2 = "zhwiki-20241101-pages-meta-current.xml.bz2"
     file_path = Path(__file__).parent / "data" / wiki_xml_bz2
-    parser = ZhWikiBz2Parser(file_path)
+    parser = WikiXmlParser(file_path)
     # parser.preview_lines(5000)
-    parser.preview_pages(max_pages=500)
+    parser.preview_pages(max_pages=100)
+```
+
+### `WikiPagesMongoWriter`
+
+Extract wiki pages from XML and write to MongoDB
+
+```sh
+python -m wikixml.mongo -d zhwiki -f "../data/zhwiki-latest-pages-meta-current.xml.bz2"
 ```
