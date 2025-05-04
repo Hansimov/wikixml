@@ -1,4 +1,5 @@
 import bz2
+import json
 
 from lxml import etree
 from pathlib import Path
@@ -42,6 +43,7 @@ class WikiXmlParser:
 class WikiPagesIterater:
     def __init__(self, file_path: Union[str, Path], max_pages: int = None):
         self.file_path = file_path
+        self.info_path = file_path.parent / file_path.name.replace(".bz2", ".json")
         self.max_pages = max_pages
         self.xmlns = "{http://www.mediawiki.org/xml/export-0.11/}"
         self.logbar = TCLogbar()
@@ -56,21 +58,60 @@ class WikiPagesIterater:
         desc = f"* {title_part} : {logstr.mesg(text_len_str)}"
         self.logbar.update(increment=1, desc=desc)
 
+    def get_file_hash(self) -> str:
+        return str(self.file_path.stat().st_mtime)
+
+    def get_file_info(self) -> dict:
+        if not self.info_path.exists():
+            return {}
+        file_hash = self.get_file_hash()
+        with open(self.info_path, "r", encoding="utf-8") as rf:
+            file_info = json.load(rf)
+            if file_info.get(file_hash, None) is None:
+                return {}
+            else:
+                return file_info
+
+    def set_file_info(self, new_info: dict):
+        if not self.info_path.exists():
+            self.info_path.touch()
+            info = {}
+        else:
+            with open(self.info_path, "r", encoding="utf-8") as rf:
+                info = json.load(rf)
+        info.update(new_info)
+        file_hash = self.get_file_hash()
+        if info.get("hash", None) != file_hash:
+            info["hash"] = file_hash
+        logger.note("> Saving info:")
+        with open(self.info_path, "w", encoding="utf-8") as wf:
+            json.dump(info, wf, indent=4, ensure_ascii=False)
+            logger.file(f"  * {self.info_path}")
+            logger.mesg(dict_to_str(info), indent=2)
+
     def count_pages(self) -> int:
         count_bar = TCLogbar()
-        count_bar.desc = logstr.note("> Counting pages")
-        with bz2.BZ2File(self.file_path, "rb") as rf:
-            context = etree.iterparse(rf, tag=self.xmlns + "page", events=("end",))
-            for idx, (_, element) in enumerate(context):
-                count_bar.update(increment=1)
-                element.clear()
-            del context
+        count_bar.desc = logstr.note("> Counting pages:")
+        file_info = self.get_file_info()
+        if file_info.get("count", None) is not None:
+            count_bar.count = file_info["count"]
+            count_bar.update(flush=True)
+        else:
+            with bz2.BZ2File(self.file_path, "rb") as rf:
+                context = etree.iterparse(rf, tag=self.xmlns + "page", events=("end",))
+                for idx, (_, element) in enumerate(context):
+                    count_bar.update(increment=1)
+                    element.clear()
+                del context
+            self.set_file_info({"count": count_bar.count})
         self.logbar.total = count_bar.count
         return count_bar.count
 
     def __iter__(self) -> Generator[dict, None, None]:
         if self.max_pages:
             self.logbar.total = self.max_pages
+        else:
+            self.count_pages()
         with bz2.BZ2File(self.file_path, "rb") as rf:
             context = etree.iterparse(rf, tag=self.xmlns + "page")
             for idx, (_, element) in enumerate(context):

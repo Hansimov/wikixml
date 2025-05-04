@@ -37,7 +37,7 @@ class WikiPagesMongoWriter:
 
     def init_mongo(self):
         self.mongo = MongoOperator(
-            self.monog_configs, connect_msg=f"from {self.__class__.__name__}", indent=2
+            self.monog_configs, connect_msg=f"from {self.__class__.__name__}"
         )
         self.pages_collect = self.mongo.db[
             self.monog_configs.get("collection", "pages")
@@ -70,13 +70,12 @@ class WikiPagesMongoWriter:
         logger.note("> Write from XML to MongoDB")
         info = {
             "file_path": self.file_path,
+            "info_path": self.iterator.info_path,
             "collection": self.pages_collect.full_name,
             "max_pages": self.iterator.max_pages,
             "bulk_size": self.bulk_size,
         }
         logger.success(dict_to_str(info), indent=2)
-
-        # self.iterator.count_pages()
 
         docs_bulk = []
         for doc in self.iterator:
@@ -129,4 +128,4 @@ if __name__ == "__main__":
     )
     writer.run()
 
-    # python -m wikixml.mongo -d zhwiki -m 7859092 -f "../data/zhwiki-latest-pages-meta-current.xml.bz2"
+    # python -m wikixml.mongo -d zhwiki -f "../data/zhwiki-latest-pages-meta-current.xml.bz2"
