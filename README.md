@@ -9,9 +9,17 @@ A Python Library to process wiki dumps xml.
 pip install wikixml --upgrade
 ```
 
-## Usage
+## Download Wiki Dumps
+ 
+Visit: https://dumps.wikimedia.org/zhwiki/latest/
 
-### `WikiXmlParser`
+Download the latest wiki dump file with proxy:
+
+```sh
+curl -L --proxy http://127.0.0.1:11111 -o ~/repos/wikixml/data/zhwiki-latest-pages-meta-current.xml.bz2 https://dumps.wikimedia.org/zhwiki/latest/zhwiki-latest-pages-meta-current.xml.bz2
+```
+
+## `WikiXmlParser`
 
 Run example:
 
@@ -32,7 +40,7 @@ if __name__ == "__main__":
     parser.preview_pages(max_pages=100)
 ```
 
-### `WikiPagesMongoWriter`
+## `WikiPagesMongoWriter`
 
 Extract wiki pages from XML and write to MongoDB
 
